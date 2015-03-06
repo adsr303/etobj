@@ -17,6 +17,22 @@ class ElemBase(object):
     def tag(self, value):
         self._elem.tag = value
 
+    @property
+    def text(self):
+        return self._elem.text
+
+    @text.setter
+    def text(self, value):
+        self._elem.text = value
+
+    @property
+    def tail(self):
+        return self._elem.tail
+
+    @tail.setter
+    def tail(self, value):
+        self._elem.tail = value
+
     def get(self, key, default=None):
         return self._elem.get(key, default)
 

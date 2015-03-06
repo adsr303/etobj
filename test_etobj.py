@@ -49,3 +49,15 @@ class TestObjectify(unittest.TestCase):
     def test_subelem_iter(self):
         ob = xml('<a><b n="1"/><b n="2"/></a>')
         self.assertEqual(['1', '2'], [b.get('n') for b in ob.b])
+
+    def test_root_text(self):
+        ob = xml('<a>abc<b/>def</a>')
+        self.assertEqual('abc', ob.text)
+
+    def test_subelem_text(self):
+        ob = xml('<a>xyz<b>abc</b>def</a>')
+        self.assertEqual('abc', ob.b.text)
+
+    def test_subelem_tail(self):
+        ob = xml('<a>xyz<b>abc</b>def</a>')
+        self.assertEqual('def', ob.b.tail)
