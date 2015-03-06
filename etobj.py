@@ -1,10 +1,18 @@
 """Convert an ElementTree to an objectified API."""
 
 
+import re
+
+
+NS_RE = re.compile(r'\{.+\}')
+
+
 class ElemBase(object):
 
     def __getattr__(self, name):
-        elem = self._elem.find(name)
+        m = NS_RE.match(self._elem.tag)
+        tname = '{}{}'.format(m.group(0), name) if m else name
+        elem = self._elem.find(tname)
         if elem is None:
             raise AttributeError('no such child: {}'.format(name))
         return Child(self, elem)
