@@ -46,6 +46,11 @@ class TestObjectify(unittest.TestCase):
         self.assertEqual('1', ob.b[0].get('n'))
         self.assertEqual('2', ob.b[1].get('n'))
 
+    def test_subelem_len(self):
+        ob = xml('<a><n/><b n="1"/><b n="2"/><n/><n/></a>')
+        self.assertEqual(2, len(ob.b))
+        self.assertEqual(3, len(ob.n))
+
     def test_subelem_iter(self):
         ob = xml('<a><b n="1"/><b n="2"/></a>')
         self.assertEqual(['1', '2'], [b.get('n') for b in ob.b])
