@@ -71,3 +71,14 @@ class TestObjectify(unittest.TestCase):
         ns = 'http://nowhere.com/'
         ob = xml('<n:a xmlns:n="{}"><n:b/></n:a>'.format(ns))
         self.assertEqual('{%s}b' % ns, ob.b.tag)
+
+    def test_subelem_namespace_index(self):
+        ns = 'http://nowhere.com/'
+        ob = xml('<a xmlns="{}"><b p="1"/><b p="2"/></a>'.format(ns))
+        self.assertEqual('1', ob.b[0].get('p'))
+        self.assertEqual('2', ob.b[1].get('p'))
+
+    def test_subelem_namespace_iter(self):
+        ns = 'http://nowhere.com/'
+        ob = xml('<a xmlns="{}"><b p="1"/><b p="2"/></a>'.format(ns))
+        self.assertEqual(['1', '2'], [b.get('p') for b in ob.b])
