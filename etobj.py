@@ -43,6 +43,11 @@ class Child(ElemBase):
             return [Child(self._parent, e) for e in elems[key]]
         return Child(self._parent, elems[key])
 
+    def __iter__(self):
+        elems = self._parent._elem.findall(self.tag)
+        for e in elems:
+            yield Child(self._parent, e)
+
 
 class Root(ElemBase):
 

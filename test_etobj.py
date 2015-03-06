@@ -40,8 +40,12 @@ class TestObjectify(unittest.TestCase):
         with self.assertRaises(AttributeError):
             ob.p
 
-    def test_subelems(self):
+    def test_subelem_index(self):
         ob = xml('<a><b n="1"/><b n="2"/></a>')
         self.assertEqual('b', ob.b.tag)
         self.assertEqual('1', ob.b[0].get('n'))
         self.assertEqual('2', ob.b[1].get('n'))
+
+    def test_subelem_iter(self):
+        ob = xml('<a><b n="1"/><b n="2"/></a>')
+        self.assertEqual(['1', '2'], [b.get('n') for b in ob.b])
