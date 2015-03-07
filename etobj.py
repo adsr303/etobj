@@ -15,6 +15,8 @@ class Element(collections.Sequence):
         self._parent = parent
 
     def __getitem__(self, key):
+        if self._parent is None:
+            return [self][key]
         elems = self._parent._elem.findall(self.tag)
         if isinstance(key, slice):
             return [Element(e, self._parent) for e in elems[key]]
