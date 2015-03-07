@@ -1,13 +1,29 @@
 """Convert an ElementTree to an objectified API."""
 
 
+import collections
 import re
 
 
 NS_RE = re.compile(r'\{.+\}')
 
 
-class ElemBase(object):
+class Element(collections.Sequence):
+
+    def __init__(self, elem, parent=None):
+        self._elem = elem
+        self._parent = parent
+
+    def __getitem__(self, key):
+        elems = self._parent._elem.findall(self.tag)
+        if isinstance(key, slice):
+            return [Element(e, self._parent) for e in elems[key]]
+        return Element(elems[key], self._parent)
+
+    def __len__(self):
+        if self._parent is None:
+            return 1
+        return len(self._parent._elem.findall(self.tag))
 
     def __getattr__(self, name):
         m = NS_RE.match(self._elem.tag)
@@ -15,7 +31,7 @@ class ElemBase(object):
         elem = self._elem.find(tname)
         if elem is None:
             raise AttributeError('no such child: {}'.format(name))
-        return Child(self, elem)
+        return Element(elem, self)
 
     @property
     def tag(self):
@@ -54,34 +70,5 @@ class ElemBase(object):
         return self._elem.items()
 
 
-class Child(ElemBase):
-
-    def __init__(self, parent, elem):
-        super(ElemBase, self).__init__()
-        self._parent = parent
-        self._elem = elem
-
-    def __getitem__(self, key):
-        elems = self._parent._elem.findall(self.tag)
-        if isinstance(key, slice):
-            return [Child(self._parent, e) for e in elems[key]]
-        return Child(self._parent, elems[key])
-
-    def __len__(self):
-        return len(self._parent._elem.findall(self.tag))
-
-    def __iter__(self):
-        elems = self._parent._elem.findall(self.tag)
-        for e in elems:
-            yield Child(self._parent, e)
-
-
-class Root(ElemBase):
-
-    def __init__(self, elem):
-        super(ElemBase, self).__init__()
-        self._elem = elem
-
-
 # Alias to expose it as function
-objectify = Root
+objectify = Element
