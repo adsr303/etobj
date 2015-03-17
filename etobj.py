@@ -35,6 +35,23 @@ class Element(collections.Sequence):
             raise AttributeError('no such child: {}'.format(name))
         return Element(elem, self)
 
+    def __str__(self):
+        return self.text
+
+    def __eq__(self, other):
+        if isinstance(other, Element):
+            return self._elem == other._elem
+        if isinstance(other, basestring):
+            return str(self) == other
+        return NotImplemented
+
+    def __ne__(self, other):
+        if isinstance(other, Element):
+            return self._elem != other._elem
+        if isinstance(other, basestring):
+            return str(self) != other
+        return NotImplemented
+
     @property
     def tag(self):
         return self._elem.tag

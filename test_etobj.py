@@ -106,9 +106,37 @@ class TestObjectify(unittest.TestCase):
         ob = xml('<a>abc<b/>def</a>')
         self.assertEqual('abc', ob.text)
 
+    def test_root_str(self):
+        ob = xml('<a>abc<b/>def</a>')
+        self.assertEqual('abc', str(ob))
+
+    def test_root_eq_str(self):
+        ob = xml('<a>abc<b/>def</a>')
+        self.assertTrue(ob == 'abc')
+        self.assertTrue('abc' == ob)
+
+    def test_root_ne_str(self):
+        ob = xml('<a>abc<b/>def</a>')
+        self.assertTrue(ob != 'xyz')
+        self.assertTrue('xyz' != ob)
+
     def test_subelem_text(self):
         ob = xml('<a>xyz<b>abc</b>def</a>')
         self.assertEqual('abc', ob.b.text)
+
+    def test_subelem_str(self):
+        ob = xml('<a>xyz<b>abc</b>def</a>')
+        self.assertEqual('abc', str(ob.b))
+
+    def test_subelem_eq_str(self):
+        ob = xml('<a>xyz<b>abc</b>def</a>')
+        self.assertTrue(ob.b == 'abc')
+        self.assertTrue('abc' == ob.b)
+
+    def test_subelem_ne_str(self):
+        ob = xml('<a>xyz<b>abc</b>def</a>')
+        self.assertTrue(ob.b != 'xyz')
+        self.assertTrue('xyz' != ob.b)
 
     def test_subelem_tail(self):
         ob = xml('<a>xyz<b>abc</b>def</a>')
