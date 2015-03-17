@@ -39,6 +39,8 @@ class Element(collections.Sequence):
         return self.text
 
     def __eq__(self, other):
+        if other is self:
+            return True
         if isinstance(other, Element):
             return self._elem == other._elem
         if isinstance(other, basestring):
@@ -46,11 +48,7 @@ class Element(collections.Sequence):
         return NotImplemented
 
     def __ne__(self, other):
-        if isinstance(other, Element):
-            return self._elem != other._elem
-        if isinstance(other, basestring):
-            return str(self) != other
-        return NotImplemented
+        return not (self == other)
 
     @property
     def tag(self):

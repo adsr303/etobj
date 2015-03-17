@@ -112,13 +112,22 @@ class TestObjectify(unittest.TestCase):
 
     def test_root_eq_str(self):
         ob = xml('<a>abc<b/>def</a>')
-        self.assertTrue(ob == 'abc')
-        self.assertTrue('abc' == ob)
+        self.assertEqual(ob, 'abc')
+        self.assertEqual('abc', ob)
 
     def test_root_ne_str(self):
         ob = xml('<a>abc<b/>def</a>')
-        self.assertTrue(ob != 'xyz')
-        self.assertTrue('xyz' != ob)
+        self.assertNotEqual(ob, 'xyz')
+        self.assertNotEqual('xyz', ob)
+
+    def test_root_eq_elem(self):
+        ob = xml('<a>abc<b/>def</a>')
+        self.assertEqual(ob, ob)
+
+    def test_root_ne_elem(self):
+        ob1 = xml('<a>abc<b/>def</a>')
+        ob2 = xml('<a>abc<b/>def</a>')
+        self.assertNotEqual(ob1, ob2)
 
     def test_subelem_text(self):
         ob = xml('<a>xyz<b>abc</b>def</a>')
@@ -130,13 +139,28 @@ class TestObjectify(unittest.TestCase):
 
     def test_subelem_eq_str(self):
         ob = xml('<a>xyz<b>abc</b>def</a>')
-        self.assertTrue(ob.b == 'abc')
-        self.assertTrue('abc' == ob.b)
+        self.assertEqual(ob.b, 'abc')
+        self.assertEqual('abc', ob.b)
 
     def test_subelem_ne_str(self):
         ob = xml('<a>xyz<b>abc</b>def</a>')
-        self.assertTrue(ob.b != 'xyz')
-        self.assertTrue('xyz' != ob.b)
+        self.assertNotEqual(ob.b, 'xyz')
+        self.assertNotEqual('xyz', ob.b)
+
+    def test_subelem_eq_elem(self):
+        ob = xml('<a>xyz<b>abc</b>def</a>')
+        self.assertEqual(ob.b, ob.b[0])
+
+    def test_subelem_ne_elem(self):
+        ob = xml('<a>xyz<b>abc</b><b>abc</b>def</a>')
+        self.assertNotEqual(ob.b, ob.b[1])
+        self.assertNotEqual(ob.b[0], ob.b[1])
+
+    def test_subelem_eq_not_implemented(self):
+        ob = xml('<a>xyz<b>1</b>def</a>')
+        x = 1
+        self.assertNotEqual(ob.b, x)
+        self.assertNotEqual(x, ob.b)
 
     def test_subelem_tail(self):
         ob = xml('<a>xyz<b>abc</b>def</a>')
