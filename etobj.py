@@ -48,7 +48,10 @@ class Element(collections.Sequence):
         return NotImplemented
 
     def __ne__(self, other):
-        return not (self == other)
+        eq = (self == other)
+        if eq is NotImplemented:
+            return NotImplemented
+        return not eq
 
     @property
     def tag(self):
