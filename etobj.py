@@ -71,7 +71,7 @@ class Element(collections.Sequence):
 
     @property
     def tail(self):
-        return self._elem.tail
+        return self._elem.tail or ''
 
     @tail.setter
     def tail(self, value):

@@ -174,6 +174,10 @@ class TestObjectify(unittest.TestCase):
         ob = xml('<a>xyz<b>abc</b>def</a>')
         self.assertEqual('def', ob.b.tail)
 
+    def test_subelem_no_tail(self):
+        ob = xml('<a><b>abc</b></a>')
+        self.assertEqual('', ob.b.tail)
+
     def test_subelem_namespace(self):
         ns = 'http://nowhere.com/'
         ob = xml('<n:a xmlns:n="{}"><n:b/></n:a>'.format(ns))
