@@ -133,9 +133,17 @@ class TestObjectify(unittest.TestCase):
         ob = xml('<a>xyz<b>abc</b>def</a>')
         self.assertEqual('abc', ob.b.text)
 
+    def test_subelem_no_text(self):
+        ob = xml('<a><b/></a>')
+        self.assertEqual('', ob.b.text)
+
     def test_subelem_str(self):
         ob = xml('<a>xyz<b>abc</b>def</a>')
         self.assertEqual('abc', str(ob.b))
+
+    def test_subelem_str_no_text(self):
+        ob = xml('<a><b/></a>')
+        self.assertEqual('', str(ob.b))
 
     def test_subelem_eq_str(self):
         ob = xml('<a>xyz<b>abc</b>def</a>')

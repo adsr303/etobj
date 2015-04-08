@@ -63,7 +63,7 @@ class Element(collections.Sequence):
 
     @property
     def text(self):
-        return self._elem.text
+        return self._elem.text or ''
 
     @text.setter
     def text(self, value):
