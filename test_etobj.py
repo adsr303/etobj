@@ -135,7 +135,7 @@ class TestObjectify(unittest.TestCase):
 
     def test_subelem_no_text(self):
         ob = xml('<a><b/></a>')
-        self.assertEqual('', ob.b.text)
+        self.assertIsNone(ob.b.text)
 
     def test_subelem_str(self):
         ob = xml('<a>xyz<b>abc</b>def</a>')
@@ -176,7 +176,7 @@ class TestObjectify(unittest.TestCase):
 
     def test_subelem_no_tail(self):
         ob = xml('<a><b>abc</b></a>')
-        self.assertEqual('', ob.b.tail)
+        self.assertIsNone(ob.b.tail)
 
     def test_subelem_namespace(self):
         ns = 'http://nowhere.com/'

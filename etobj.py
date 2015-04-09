@@ -36,7 +36,7 @@ class Element(collections.Sequence):
         return Element(elem, self)
 
     def __str__(self):
-        return self.text
+        return self.text or ''
 
     def __eq__(self, other):
         if other is self:
@@ -63,7 +63,7 @@ class Element(collections.Sequence):
 
     @property
     def text(self):
-        return self._elem.text or ''
+        return self._elem.text
 
     @text.setter
     def text(self, value):
@@ -71,7 +71,7 @@ class Element(collections.Sequence):
 
     @property
     def tail(self):
-        return self._elem.tail or ''
+        return self._elem.tail
 
     @tail.setter
     def tail(self, value):
