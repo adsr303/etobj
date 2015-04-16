@@ -193,3 +193,7 @@ class TestObjectify(unittest.TestCase):
         ns = 'http://nowhere.com/'
         ob = xml('<a xmlns="{}"><b p="1"/><b p="2"/></a>'.format(ns))
         self.assertEqual(['1', '2'], [b.get('p') for b in ob.b])
+
+    def test_attrib(self):
+        ob = xml('<a m="yyy" n="zzz"></a>')
+        self.assertEqual(dict(m='yyy', n='zzz'), ob.attrib)

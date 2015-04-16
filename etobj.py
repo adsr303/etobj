@@ -89,6 +89,10 @@ class Element(collections.Sequence):
     def items(self):
         return self._elem.items()
 
+    @property
+    def attrib(self):
+        return self._elem.attrib
+
 
 # Alias to expose it as function
 objectify = Element
