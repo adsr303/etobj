@@ -4,8 +4,8 @@ import etobj
 import xml.etree.ElementTree as ET
 
 
-def xml(s):
-    return etobj.objectify(ET.XML(s))
+def xml(s, *args, **kwargs):
+    return etobj.objectify(ET.XML(s), *args, **kwargs)
 
 
 class TestObjectify(unittest.TestCase):
@@ -69,7 +69,28 @@ class TestObjectify(unittest.TestCase):
     def test_subsubelem_missing(self):
         ob = xml('<a><b><c/></b></a>')
         with self.assertRaises(AttributeError):
+            ob.b.p
+
+    def test_custom_attr_error_class(self):
+        class DummyError(Exception): pass
+
+        ob = xml('<a><b/></a>', attr_error_class=DummyError)
+        with self.assertRaises(DummyError):
             ob.p
+
+    def test_custom_attr_error_class_for_subelem(self):
+        class DummyError(Exception): pass
+
+        ob = xml('<a><b/></a>', attr_error_class=DummyError)
+        with self.assertRaises(DummyError):
+            ob.b.p
+
+    def test_custom_attr_error_class_for_subelems(self):
+        class DummyError(Exception): pass
+
+        ob = xml('<a><b/><b/></a>', attr_error_class=DummyError)
+        with self.assertRaises(DummyError):
+            ob.b[1].p
 
     def test_subelem_index(self):
         ob = xml('<a><b n="1"/><b n="2"/></a>')

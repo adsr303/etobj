@@ -10,9 +10,15 @@ NS_RE = re.compile(r'\{.+\}')
 
 class Element(collections.Sequence):
 
-    def __init__(self, elem, parent=None):
+    def __init__(self, elem, parent=None, attr_error_class=None):
         self._elem = elem
         self._parent = parent
+        if attr_error_class is not None:
+            self._attr_error_class = attr_error_class
+        elif parent is not None:
+            self._attr_error_class = parent._attr_error_class
+        else:
+            self._attr_error_class = AttributeError
 
     def __getitem__(self, key):
         if self._parent is None:
@@ -32,7 +38,7 @@ class Element(collections.Sequence):
         tname = '{}{}'.format(m.group(0), name) if m else name
         elem = self._elem.find(tname)
         if elem is None:
-            raise AttributeError('no such child: {}'.format(name))
+            raise self._attr_error_class('no such child: {}'.format(name))
         return Element(elem, self)
 
     def __str__(self):
