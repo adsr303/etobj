@@ -99,6 +99,20 @@ class Element(collections.Sequence):
     def attrib(self):
         return self._elem.attrib
 
+    def shallow_signature(self):
+        return shallow_signature(self._elem)
+
+    def deep_signature(self):
+        return deep_signature(self._elem)
+
+
 
 # Alias to expose it as function
 objectify = Element
+
+def shallow_signature(elem):
+    return (elem.tag, elem.attrib, elem.text, [], elem.tail)
+
+def deep_signature(elem):
+    children = [deep_signature(c) for c in list(elem)]
+    return (elem.tag, elem.attrib, elem.text, children, elem.tail)
