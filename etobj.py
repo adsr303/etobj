@@ -48,7 +48,7 @@ class Element(collections.Sequence):
         if other is self:
             return True
         if isinstance(other, Element):
-            return self._elem == other._elem
+            return equal(self._elem, other._elem)
         if isinstance(other, basestring):
             return str(self) == other
         return NotImplemented
@@ -116,3 +116,10 @@ def shallow_signature(elem):
 def deep_signature(elem):
     children = [deep_signature(c) for c in list(elem)]
     return (elem.tag, elem.attrib, elem.text, children, elem.tail)
+
+def equal(elem1, elem2):
+    if shallow_signature(elem1) != shallow_signature(elem2):
+        return False
+    if len(elem1) != len(elem2):
+        return False
+    return all(equal(x, y) for x, y in zip(list(elem1), list(elem2)))

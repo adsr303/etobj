@@ -141,13 +141,28 @@ class TestObjectify(unittest.TestCase):
         self.assertNotEqual(ob, 'xyz')
         self.assertNotEqual('xyz', ob)
 
-    def test_root_eq_elem(self):
+    def test_root_eq_self(self):
         ob = xml('<a>abc<b/>def</a>')
         self.assertEqual(ob, ob)
 
-    def test_root_ne_elem(self):
-        ob1 = xml('<a>abc<b/>def</a>')
-        ob2 = xml('<a>abc<b/>def</a>')
+    def test_elems_equal_if_same_content(self):
+        ob1 = xml('<a m="bar" n="foo">abc<b/>def<c p="q">baz</c></a>')
+        ob2 = xml('<a n="foo" m="bar">abc<b/>def<c p="q">baz</c></a>')
+        self.assertEqual(ob1, ob2)
+
+    def test_elems_not_equal_if_different_content(self):
+        ob1 = xml('<a>abc</a>')
+        ob2 = xml('<a n="foo">abc</a>')
+        self.assertNotEqual(ob1, ob2)
+
+    def test_elems_not_equal_if_extra_child(self):
+        ob1 = xml('<a>abc<b/></a>')
+        ob2 = xml('<a>abc</a>')
+        self.assertNotEqual(ob1, ob2)
+
+    def test_elems_not_equal_if_different_children(self):
+        ob1 = xml('<a>abc<b/>foo</a>')
+        ob2 = xml('<a>abc<b/>bar</a>')
         self.assertNotEqual(ob1, ob2)
 
     def test_subelem_text(self):
