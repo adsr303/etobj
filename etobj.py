@@ -36,12 +36,7 @@ class Element(collections.Sequence):
         return len(self._parent._elem.findall(self.tag))
 
     def __getattr__(self, name):
-        m = NS_RE.match(self._elem.tag)
-        tname = '{}{}'.format(m.group(0), name) if m else name
-        elem = self._elem.find(tname)
-        if elem is None:
-            raise self._attr_error_class('no such child: {}'.format(name))
-        return Element(elem, self)
+        return Element(self._find(name), self)
 
     def __setattr__(self, name, value):
         # Consider an attribute listed by dir() as 'well-known'. Only setting
@@ -57,12 +52,20 @@ class Element(collections.Sequence):
                 new = self._rawelement(name, text=value)
             if new.tag != name:
                 new.tag = name
-            current = self._elem.find(name)
-            if current is not None:
+            try:
+                current = self._find(name)
+            except self._attr_error_class as e:
+                self._elem.append(new)
+            else:
                 idx = list(self._elem).index(current)
                 self._elem[idx] = new
-            else:
-                self._elem.append(new)
+
+    def __delattr__(self, name):
+        if name in dir(self):
+            super(Element, self).__delattr__(name)
+        else:
+            elem = self._find(name)
+            self._elem.remove(elem)
 
     def __str__(self):
         return self.text or ''
@@ -132,6 +135,14 @@ class Element(collections.Sequence):
         new = self._elem.makeelement(tag, {})
         new.text = text
         return new
+
+    def _find(self, name):
+        m = NS_RE.match(self._elem.tag)
+        tname = '{}{}'.format(m.group(0), name) if m else name
+        elem = self._elem.find(tname)
+        if elem is None:
+            raise self._attr_error_class('no such child: {}'.format(name))
+        return elem
 
 # Alias to expose it as function
 objectify = Element
