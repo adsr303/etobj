@@ -49,7 +49,14 @@ class Element(collections.Sequence):
         if name in dir(self):
             super(Element, self).__setattr__(name, value)
         else:
-            new = self._rawelement(name, text=value)
+            if isinstance(value, type(self._elem)):
+                new = value
+            elif isinstance(value, Element):
+                new = value._elem
+            else:
+                new = self._rawelement(name, text=value)
+            if new.tag != name:
+                new.tag = name
             current = self._elem.find(name)
             if current is not None:
                 idx = list(self._elem).index(current)

@@ -265,17 +265,50 @@ class TestModifications(unittest.TestCase):
         ob.b = 'foo'
         self.assertEqual(xml('<a><b>foo</b></a>'), ob)
 
+    def test_sets_etree_as_subelem(self):
+        ob = xml('<a/>')
+        raw_elem = ET.XML('<b><c/></b>')
+        ob.b = raw_elem
+        self.assertEqual(xml('<a><b><c/></b></a>'), ob)
+
+    def test_coerces_tag_for_etree_subelem(self):
+        ob = xml('<a/>')
+        raw_elem = ET.XML('<b foo="bar"/>')
+        ob.c = raw_elem
+        self.assertEqual(xml('<a><c foo="bar"/></a>'), ob)
+
+    def test_sets_other_element_as_subelem(self):
+        ob = xml('<a/>')
+        other = xml('<b><c/></b>')
+        ob.b = other
+        self.assertEqual(xml('<a><b><c/></b></a>'), ob)
+
+    def test_coerces_tag_for_other_element_as_subelem(self):
+        ob = xml('<a/>')
+        other = xml('<b foo="bar"/>')
+        ob.c = other
+        self.assertEqual(xml('<a><c foo="bar"/></a>'), ob)
+
     def test_overrides_if_subelem_set_twice(self):
         ob = xml('<a/>')
         ob.b = 'foo'
         ob.b = 'bar'
         self.assertEqual(xml('<a><b>bar</b></a>'), ob)
 
+    def test_overrides_with_various_subelem_types(self):
+        ob = xml('<a/>')
+        ob.b = 'foo'
+        ob.b = ET.XML('<b foo="bar"/>')
+        self.assertEqual(xml('<a><b foo="bar"/></a>'), ob)
+        ob.b = xml('<c bar="baz"/>')
+        self.assertEqual(xml('<a><b bar="baz"/></a>'), ob)
+
     def test_overrides_exactly_first_child_if_set_again(self):
         ob = xml('<a><x/><b>foo</b><b>bar</b><b>baz</b><y/></a>')
-        ob.b = 'another'
         expected = xml('<a><x/><b>another</b><b>bar</b><b>baz</b><y/></a>')
-        self.assertEqual(expected, ob)
+        for new in ['another', ET.XML('<x>another</x>'), xml('<y>another</y>')]:
+            ob.b = new
+            self.assertEqual(expected, ob)
 
     def test_direct_access_to_instance_dict(self):
         ob = xml('<a/>')
@@ -305,6 +338,7 @@ class TestModifications(unittest.TestCase):
             return 'foo'
         ob.keys = foo
         self.assertEqual('foo', ob.keys())
+        self.assertEqual(xml('<a/>'), ob)
 
     def test_no_unnecessary_subelem_created_for_sublasses(self):
         class Foo(etobj.Element):
