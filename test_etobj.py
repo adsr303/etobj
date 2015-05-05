@@ -252,3 +252,78 @@ class TestObjectify(unittest.TestCase):
         expected = ('b', {'n':'bar'}, 'abc',
                     [('c', {'m':'foo'}, 'bar', [], None)], 'def')
         self.assertEqual(expected, ob.b.deep_signature())
+
+class TestModifications(unittest.TestCase):
+
+    def test_sets_subelem_no_text(self):
+        ob = xml('<a/>')
+        ob.b = None
+        self.assertEqual(xml('<a><b/></a>'), ob)
+
+    def test_sets_subelem_with_text(self):
+        ob = xml('<a/>')
+        ob.b = 'foo'
+        self.assertEqual(xml('<a><b>foo</b></a>'), ob)
+
+    def test_overrides_if_subelem_set_twice(self):
+        ob = xml('<a/>')
+        ob.b = 'foo'
+        ob.b = 'bar'
+        self.assertEqual(xml('<a><b>bar</b></a>'), ob)
+
+    def test_overrides_exactly_first_child_if_set_again(self):
+        ob = xml('<a><x/><b>foo</b><b>bar</b><b>baz</b><y/></a>')
+        ob.b = 'another'
+        expected = xml('<a><x/><b>another</b><b>bar</b><b>baz</b><y/></a>')
+        self.assertEqual(expected, ob)
+
+    def test_direct_access_to_instance_dict(self):
+        ob = xml('<a/>')
+        ob.__dict__['b'] = 'foo'
+        self.assertEqual(xml('<a/>'), ob)
+        self.assertEqual('foo', ob.b)
+
+    def test_works_with_c_element_tree(self):
+        import xml.etree.cElementTree as cET
+        ob = etobj.objectify(cET.XML('<a/>'))
+        ob.b = 'foo'
+        self.assertEqual(xml('<a><b>foo</b></a>'), ob)
+
+    def test_no_subelem_created_for_known_instance_properties(self):
+        ob = xml('<a/>')
+        ob.tag = 'b'
+        ob.text = 'foo'
+        ob.attrib['bar'] = 'baz'
+        p = xml('<p/>')
+        ob._parent = p
+        self.assertIs(p, ob._parent)
+        self.assertEqual(xml('<b bar="baz">foo</b>'), ob)
+
+    def test_no_subelem_created_for_known_class_properties(self):
+        ob = xml('<a/>')
+        def foo():
+            return 'foo'
+        ob.keys = foo
+        self.assertEqual('foo', ob.keys())
+
+    def test_no_unnecessary_subelem_created_for_sublasses(self):
+        class Foo(etobj.Element):
+            def sayhello(self):
+                return 'hello'
+        ob = Foo(ET.XML('<a/>'))
+        self.assertEqual('hello', ob.sayhello())
+
+        def sayhi():
+            return 'hi'
+        ob.sayhello = sayhi
+
+        def foo():
+            return 'foo'
+        ob.keys = foo
+
+        ob.text = 'welcome'
+        ob.b = 'bar'
+
+        self.assertEqual('hi', ob.sayhello())
+        self.assertEqual('foo', ob.keys())
+        self.assertEqual(xml('<a>welcome<b>bar</b></a>'), ob)

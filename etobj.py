@@ -3,6 +3,7 @@
 
 import collections
 import re
+import itertools
 
 
 NS_RE = re.compile(r'\{.+\}')
@@ -11,14 +12,15 @@ NS_RE = re.compile(r'\{.+\}')
 class Element(collections.Sequence):
 
     def __init__(self, elem, parent=None, attr_error_class=None):
-        self._elem = elem
-        self._parent = parent
+        # Use __dict__ directly to avoid calls to __setattr__.
+        self.__dict__['_elem'] = elem
+        self.__dict__['_parent'] = parent
         if attr_error_class is not None:
-            self._attr_error_class = attr_error_class
+            self.__dict__['_attr_error_class'] = attr_error_class
         elif parent is not None:
-            self._attr_error_class = parent._attr_error_class
+            self.__dict__['_attr_error_class'] = parent._attr_error_class
         else:
-            self._attr_error_class = AttributeError
+            self.__dict__['_attr_error_class'] = AttributeError
 
     def __getitem__(self, key):
         if self._parent is None:
@@ -40,6 +42,20 @@ class Element(collections.Sequence):
         if elem is None:
             raise self._attr_error_class('no such child: {}'.format(name))
         return Element(elem, self)
+
+    def __setattr__(self, name, value):
+        # Consider an attribute listed by dir() as 'well-known'. Only setting
+        # an 'unknown' attribute should result in creating a subelement.
+        if name in dir(self):
+            super(Element, self).__setattr__(name, value)
+        else:
+            new = self._rawelement(name, text=value)
+            current = self._elem.find(name)
+            if current is not None:
+                idx = list(self._elem).index(current)
+                self._elem[idx] = new
+            else:
+                self._elem.append(new)
 
     def __str__(self):
         return self.text or ''
@@ -105,7 +121,10 @@ class Element(collections.Sequence):
     def deep_signature(self):
         return deep_signature(self._elem)
 
-
+    def _rawelement(self, tag, text):
+        new = self._elem.makeelement(tag, {})
+        new.text = text
+        return new
 
 # Alias to expose it as function
 objectify = Element
@@ -122,4 +141,4 @@ def equal(elem1, elem2):
         return False
     if len(elem1) != len(elem2):
         return False
-    return all(equal(x, y) for x, y in zip(list(elem1), list(elem2)))
+    return all(equal(x, y) for x, y in itertools.izip(list(elem1), list(elem2)))
