@@ -236,22 +236,49 @@ class TestObjectify(unittest.TestCase):
 
     def test_empty_shallow_signature(self):
         ob = etobj.Element(ET.Element('foo'))
-        self.assertEqual(('foo', {}, None, [], None), ob.shallow_signature())
+        self.assertEqual(('foo', {}, None, [], None),
+                         etobj.shallow_signature(ob))
 
     def test_shallow_signature(self):
         ob = xml('<a>xyz<b n="bar">abc</b>def</a>')
         self.assertEqual(('b', {'n':'bar'}, 'abc', [], 'def'),
-                         ob.b.shallow_signature())
+                         etobj.shallow_signature(ob.b))
 
     def test_empty_deep_signature(self):
         ob = etobj.Element(ET.Element('foo'))
-        self.assertEqual(('foo', {}, None, [], None), ob.deep_signature())
+        self.assertEqual(('foo', {}, None, [], None), etobj.deep_signature(ob))
 
     def test_deep_signature(self):
         ob = xml('<a><b n="bar">abc<c m="foo">bar</c></b>def</a>')
         expected = ('b', {'n':'bar'}, 'abc',
                     [('c', {'m':'foo'}, 'bar', [], None)], 'def')
-        self.assertEqual(expected, ob.b.deep_signature())
+        self.assertEqual(expected, etobj.deep_signature(ob.b))
+
+    def test_elem(self):
+        ob = xml('<a foo="bar">baz</a>')
+        self.assertEqual('a', ob.elem.tag)
+        self.assertEqual(dict(foo='bar'), ob.elem.attrib)
+        self.assertEqual('baz', ob.elem.text)
+
+    def test_parent(self):
+        ob = xml('<a><b><c/></b></a>')
+        self.assertIsNone(ob.parent)
+        self.assertEqual('a', ob.b.parent.tag)
+        self.assertEqual('b', ob.b.c.parent.tag)
+        self.assertEqual('a', ob.b.c.parent.parent.tag)
+
+    def test_root(self):
+        ob = xml('<a><b><c><d/></c></b></a>')
+        for x in [ob, ob.b, ob.b.c, ob.b.c.d]:
+            self.assertIs(ob, etobj.root(x))
+
+    def test_iterancestors(self):
+        ob = xml('<a><b><c><d/></c></b></a>')
+        ancestors = list(etobj.iterancestors(ob.b.c.d))
+        self.assertEqual(['c', 'b', 'a'], [a.tag for a in ancestors])
+        self.assertEqual([], list(etobj.iterancestors(ob)))
+
+
 
 class TestModifications(unittest.TestCase):
 
@@ -361,3 +388,36 @@ class TestModifications(unittest.TestCase):
         self.assertEqual('hi', ob.sayhello())
         self.assertEqual('foo', ob.keys())
         self.assertEqual(xml('<a>welcome<b>bar</b></a>'), ob)
+
+    def test_deletes_subelement(self):
+        ob = xml('<a><b/></a>')
+        del ob.b
+        self.assertEqual(xml('<a/>'), ob)
+
+    def test_raises_if_subelem_not_found(self):
+        ob = xml('<a><b/></a>')
+        with self.assertRaises(AttributeError):
+            del ob.c
+
+    def test_deletes_subelems_one_by_one(self):
+        ob = xml('<a><b>foo</b><b>bar</b><b>baz</b></a>')
+        del ob.b
+        self.assertEqual(xml('<a><b>bar</b><b>baz</b></a>'), ob)
+        del ob.b
+        self.assertEqual(xml('<a><b>baz</b></a>'), ob)
+        del ob.b
+        self.assertEqual(xml('<a/>'), ob)
+        with self.assertRaises(AttributeError):
+            del ob.b
+
+    def test_deletes_regular_attributes_normally(self):
+        ob = xml('<a/>')
+        self.assertTrue(hasattr(ob, '_parent'))
+        del ob._parent
+        self.assertFalse(hasattr(ob, '_parent'))
+
+    def test_forbids_deletion_of_properties(self):
+        ob = xml('<a/>')
+        for prop in ['tag', 'attrib', 'text', 'tail']:
+            with self.assertRaises(AttributeError):
+                delattr(ob, prop)

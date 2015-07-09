@@ -23,25 +23,16 @@ class Element(collections.Sequence):
             self.__dict__['_attr_error_class'] = AttributeError
 
     def __getitem__(self, key):
-        if self._parent is None:
-            return [self][key]
-        elems = self._parent._elem.findall(self.tag)
+        elems = _siblings(self)
         if isinstance(key, slice):
-            return [Element(e, self._parent) for e in elems[key]]
-        return Element(elems[key], self._parent)
+            return [Element(e, self.parent) for e in elems[key]]
+        return Element(elems[key], self.parent)
 
     def __len__(self):
-        if self._parent is None:
-            return 1
-        return len(self._parent._elem.findall(self.tag))
+        return len(_siblings(self))
 
     def __getattr__(self, name):
-        m = NS_RE.match(self._elem.tag)
-        tname = '{}{}'.format(m.group(0), name) if m else name
-        elem = self._elem.find(tname)
-        if elem is None:
-            raise self._attr_error_class('no such child: {}'.format(name))
-        return Element(elem, self)
+        return Element(_find(self, name), self)
 
     def __setattr__(self, name, value):
         # Consider an attribute listed by dir() as 'well-known'. Only setting
@@ -49,20 +40,28 @@ class Element(collections.Sequence):
         if name in dir(self):
             super(Element, self).__setattr__(name, value)
         else:
-            if isinstance(value, type(self._elem)):
+            if isinstance(value, type(self.elem)):
                 new = value
             elif isinstance(value, Element):
-                new = value._elem
+                new = value.elem
             else:
-                new = self._rawelement(name, text=value)
+                new = _rawelement(self, name, text=value)
             if new.tag != name:
                 new.tag = name
-            current = self._elem.find(name)
-            if current is not None:
-                idx = list(self._elem).index(current)
-                self._elem[idx] = new
+            try:
+                current = _find(self, name)
+            except self._attr_error_class as e:
+                self.elem.append(new)
             else:
-                self._elem.append(new)
+                idx = list(self.elem).index(current)
+                self.elem[idx] = new
+
+    def __delattr__(self, name):
+        if name in dir(self):
+            super(Element, self).__delattr__(name)
+        else:
+            elem = _find(self, name)
+            self.elem.remove(elem)
 
     def __str__(self):
         return self.text or ''
@@ -71,7 +70,7 @@ class Element(collections.Sequence):
         if other is self:
             return True
         if isinstance(other, Element):
-            return equal(self._elem, other._elem)
+            return _equal(self.elem, other.elem)
         if isinstance(other, basestring):
             return str(self) == other
         return NotImplemented
@@ -84,68 +83,105 @@ class Element(collections.Sequence):
 
     @property
     def tag(self):
-        return self._elem.tag
+        return self.elem.tag
 
     @tag.setter
     def tag(self, value):
-        self._elem.tag = value
+        self.elem.tag = value
 
     @property
     def text(self):
-        return self._elem.text
+        return self.elem.text
 
     @text.setter
     def text(self, value):
-        self._elem.text = value
+        self.elem.text = value
 
     @property
     def tail(self):
-        return self._elem.tail
+        return self.elem.tail
 
     @tail.setter
     def tail(self, value):
-        self._elem.tail = value
+        self.elem.tail = value
 
     def get(self, key, default=None):
-        return self._elem.get(key, default)
+        return self.elem.get(key, default)
 
     def set(self, key, value):
-        self._elem.set(key, value)
+        self.elem.set(key, value)
 
     def keys(self):
-        return self._elem.keys()
+        return self.elem.keys()
 
     def items(self):
-        return self._elem.items()
+        return self.elem.items()
 
     @property
     def attrib(self):
-        return self._elem.attrib
+        return self.elem.attrib
 
-    def shallow_signature(self):
-        return shallow_signature(self._elem)
+    @property
+    def elem(self):
+        return self._elem
 
-    def deep_signature(self):
-        return deep_signature(self._elem)
+    @property
+    def parent(self):
+        return self._parent
 
-    def _rawelement(self, tag, text):
-        new = self._elem.makeelement(tag, {})
-        new.text = text
-        return new
+
+
+def root(obj):
+    while obj.parent is not None:
+        obj = obj.parent
+    return obj
+
+def iterancestors(obj):
+    anc = obj.parent
+    while anc is not None:
+        yield anc
+        anc = anc.parent
+
+def shallow_signature(obj):
+    return _shallow_signature(obj.elem)
+
+def deep_signature(obj):
+    return _deep_signature(obj.elem)
 
 # Alias to expose it as function
 objectify = Element
 
-def shallow_signature(elem):
+
+
+def _shallow_signature(elem):
     return (elem.tag, elem.attrib, elem.text, [], elem.tail)
 
-def deep_signature(elem):
-    children = [deep_signature(c) for c in list(elem)]
+def _deep_signature(elem):
+    children = [_deep_signature(c) for c in list(elem)]
     return (elem.tag, elem.attrib, elem.text, children, elem.tail)
 
-def equal(elem1, elem2):
-    if shallow_signature(elem1) != shallow_signature(elem2):
+def _equal(elem1, elem2):
+    if _shallow_signature(elem1) != _shallow_signature(elem2):
         return False
     if len(elem1) != len(elem2):
         return False
-    return all(equal(x, y) for x, y in itertools.izip(list(elem1), list(elem2)))
+    return all(
+        _equal(x, y) for x, y in itertools.izip(list(elem1), list(elem2)))
+
+def _rawelement(obj, tag, text):
+    new = obj.elem.makeelement(tag, {})
+    new.text = text
+    return new
+
+def _find(obj, name):
+    m = NS_RE.match(obj.elem.tag)
+    tname = '{}{}'.format(m.group(0), name) if m else name
+    elem = obj.elem.find(tname)
+    if elem is None:
+        raise obj._attr_error_class('no such child: {}'.format(name))
+    return elem
+
+def _siblings(obj):
+    if obj.parent is None:
+        return [obj.elem]
+    return obj.parent.elem.findall(obj.tag)
