@@ -36,7 +36,7 @@ class Element(collections.Sequence):
         return len(self._parent._elem.findall(self.tag))
 
     def __getattr__(self, name):
-        return Element(self._find(name), self)
+        return Element(_find(self, name), self)
 
     def __setattr__(self, name, value):
         # Consider an attribute listed by dir() as 'well-known'. Only setting
@@ -49,11 +49,11 @@ class Element(collections.Sequence):
             elif isinstance(value, Element):
                 new = value._elem
             else:
-                new = self._rawelement(name, text=value)
+                new = _rawelement(self, name, text=value)
             if new.tag != name:
                 new.tag = name
             try:
-                current = self._find(name)
+                current = _find(self, name)
             except self._attr_error_class as e:
                 self._elem.append(new)
             else:
@@ -64,7 +64,7 @@ class Element(collections.Sequence):
         if name in dir(self):
             super(Element, self).__delattr__(name)
         else:
-            elem = self._find(name)
+            elem = _find(self, name)
             self._elem.remove(elem)
 
     def __str__(self):
@@ -74,7 +74,7 @@ class Element(collections.Sequence):
         if other is self:
             return True
         if isinstance(other, Element):
-            return equal(self._elem, other._elem)
+            return _equal(self._elem, other._elem)
         if isinstance(other, basestring):
             return str(self) == other
         return NotImplemented
@@ -125,38 +125,43 @@ class Element(collections.Sequence):
     def attrib(self):
         return self._elem.attrib
 
-    def shallow_signature(self):
-        return shallow_signature(self._elem)
 
-    def deep_signature(self):
-        return deep_signature(self._elem)
 
-    def _rawelement(self, tag, text):
-        new = self._elem.makeelement(tag, {})
-        new.text = text
-        return new
+def shallow_signature(obj):
+    return _shallow_signature(obj._elem)
 
-    def _find(self, name):
-        m = NS_RE.match(self._elem.tag)
-        tname = '{}{}'.format(m.group(0), name) if m else name
-        elem = self._elem.find(tname)
-        if elem is None:
-            raise self._attr_error_class('no such child: {}'.format(name))
-        return elem
+def deep_signature(obj):
+    return _deep_signature(obj._elem)
 
 # Alias to expose it as function
 objectify = Element
 
-def shallow_signature(elem):
+
+
+def _shallow_signature(elem):
     return (elem.tag, elem.attrib, elem.text, [], elem.tail)
 
-def deep_signature(elem):
-    children = [deep_signature(c) for c in list(elem)]
+def _deep_signature(elem):
+    children = [_deep_signature(c) for c in list(elem)]
     return (elem.tag, elem.attrib, elem.text, children, elem.tail)
 
-def equal(elem1, elem2):
-    if shallow_signature(elem1) != shallow_signature(elem2):
+def _equal(elem1, elem2):
+    if _shallow_signature(elem1) != _shallow_signature(elem2):
         return False
     if len(elem1) != len(elem2):
         return False
-    return all(equal(x, y) for x, y in itertools.izip(list(elem1), list(elem2)))
+    return all(
+        _equal(x, y) for x, y in itertools.izip(list(elem1), list(elem2)))
+
+def _rawelement(obj, tag, text):
+        new = obj._elem.makeelement(tag, {})
+        new.text = text
+        return new
+
+def _find(obj, name):
+    m = NS_RE.match(obj._elem.tag)
+    tname = '{}{}'.format(m.group(0), name) if m else name
+    elem = obj._elem.find(tname)
+    if elem is None:
+        raise obj._attr_error_class('no such child: {}'.format(name))
+    return elem

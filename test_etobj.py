@@ -236,22 +236,23 @@ class TestObjectify(unittest.TestCase):
 
     def test_empty_shallow_signature(self):
         ob = etobj.Element(ET.Element('foo'))
-        self.assertEqual(('foo', {}, None, [], None), ob.shallow_signature())
+        self.assertEqual(('foo', {}, None, [], None),
+                         etobj.shallow_signature(ob))
 
     def test_shallow_signature(self):
         ob = xml('<a>xyz<b n="bar">abc</b>def</a>')
         self.assertEqual(('b', {'n':'bar'}, 'abc', [], 'def'),
-                         ob.b.shallow_signature())
+                         etobj.shallow_signature(ob.b))
 
     def test_empty_deep_signature(self):
         ob = etobj.Element(ET.Element('foo'))
-        self.assertEqual(('foo', {}, None, [], None), ob.deep_signature())
+        self.assertEqual(('foo', {}, None, [], None), etobj.deep_signature(ob))
 
     def test_deep_signature(self):
         ob = xml('<a><b n="bar">abc<c m="foo">bar</c></b>def</a>')
         expected = ('b', {'n':'bar'}, 'abc',
                     [('c', {'m':'foo'}, 'bar', [], None)], 'def')
-        self.assertEqual(expected, ob.b.deep_signature())
+        self.assertEqual(expected, etobj.deep_signature(ob.b))
 
 class TestModifications(unittest.TestCase):
 
