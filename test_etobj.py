@@ -254,6 +254,32 @@ class TestObjectify(unittest.TestCase):
                     [('c', {'m':'foo'}, 'bar', [], None)], 'def')
         self.assertEqual(expected, etobj.deep_signature(ob.b))
 
+    def test_elem(self):
+        ob = xml('<a foo="bar">baz</a>')
+        self.assertEqual('a', ob.elem.tag)
+        self.assertEqual(dict(foo='bar'), ob.elem.attrib)
+        self.assertEqual('baz', ob.elem.text)
+
+    def test_parent(self):
+        ob = xml('<a><b><c/></b></a>')
+        self.assertIsNone(ob.parent)
+        self.assertEqual('a', ob.b.parent.tag)
+        self.assertEqual('b', ob.b.c.parent.tag)
+        self.assertEqual('a', ob.b.c.parent.parent.tag)
+
+    def test_root(self):
+        ob = xml('<a><b><c><d/></c></b></a>')
+        for x in [ob, ob.b, ob.b.c, ob.b.c.d]:
+            self.assertIs(ob, etobj.root(x))
+
+    def test_iterancestors(self):
+        ob = xml('<a><b><c><d/></c></b></a>')
+        ancestors = list(etobj.iterancestors(ob.b.c.d))
+        self.assertEqual(['c', 'b', 'a'], [a.tag for a in ancestors])
+        self.assertEqual([], list(etobj.iterancestors(ob)))
+
+
+
 class TestModifications(unittest.TestCase):
 
     def test_sets_subelem_no_text(self):

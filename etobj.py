@@ -125,7 +125,26 @@ class Element(collections.Sequence):
     def attrib(self):
         return self._elem.attrib
 
+    @property
+    def elem(self):
+        return self._elem
 
+    @property
+    def parent(self):
+        return self._parent
+
+
+
+def root(obj):
+    while obj.parent is not None:
+        obj = obj.parent
+    return obj
+
+def iterancestors(obj):
+    anc = obj.parent
+    while anc is not None:
+        yield anc
+        anc = anc.parent
 
 def shallow_signature(obj):
     return _shallow_signature(obj._elem)
