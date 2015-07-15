@@ -8,7 +8,7 @@ def xml(s, *args, **kwargs):
     return etobj.objectify(ET.XML(s), *args, **kwargs)
 
 
-class TestObjectify(unittest.TestCase):
+class TestBasics(unittest.TestCase):
 
     def test_subelem(self):
         ob = xml('<a><b/></a>')
@@ -25,33 +25,8 @@ class TestObjectify(unittest.TestCase):
         self.assertEqual(2, len(b))
         self.assertEqual('2', b[1].get('n'))
 
-    def test_root_attr(self):
-        ob = xml('<a n="zzz"><b/></a>')
-        self.assertEqual('zzz', ob.get('n'))
 
-    def test_root_len(self):
-        ob = xml('<a n="zzz"><b/></a>')
-        self.assertEqual(1, len(ob))
-
-    def test_root_index(self):
-        ob = xml('<a n="zzz"><b/></a>')
-        self.assertEqual(ob, ob[0])
-        self.assertEqual(ob, ob[-1])
-
-    def test_root_index_out_of_range(self):
-        ob = xml('<a n="zzz"><b/></a>')
-        with self.assertRaises(IndexError):
-            ob[1]
-
-    def test_root_slice(self):
-        ob = xml('<a n="zzz"><b/></a>')
-        self.assertEqual([ob], ob[:])
-        self.assertEqual([ob], ob[0:1])
-        self.assertEqual([ob], ob[-1:])
-
-    def test_root_slice_out_of_range(self):
-        ob = xml('<a n="zzz"><b/></a>')
-        self.assertEqual([], ob[1:3])
+class TestReadingSubelements(unittest.TestCase):
 
     def test_subelem_attr(self):
         ob = xml('<a><b n="zzz"/></a>')
@@ -92,195 +67,8 @@ class TestObjectify(unittest.TestCase):
         with self.assertRaises(DummyError):
             ob.b[1].p
 
-    def test_subelem_index(self):
-        ob = xml('<a><b n="1"/><b n="2"/></a>')
-        self.assertEqual('b', ob.b.tag)
-        self.assertEqual('1', ob.b[0].get('n'))
-        self.assertEqual('2', ob.b[1].get('n'))
-        self.assertEqual('2', ob.b[-1].get('n'))
 
-    def test_subelem_index_out_of_range(self):
-        ob = xml('<a><b n="1"/><b n="2"/></a>')
-        with self.assertRaises(IndexError):
-            ob.b[2]
-
-    def test_subelem_len(self):
-        ob = xml('<a><n/><b n="1"/><b n="2"/><n/><n/></a>')
-        self.assertEqual(2, len(ob.b))
-        self.assertEqual(3, len(ob.n))
-
-    def test_subelem_slice(self):
-        ob = xml('<a><b n="1"/><b n="2"/><b n="3"/></a>')
-        self.assertEqual(['1', '2', '3'], [b.get('n') for b in ob.b[:]])
-        self.assertEqual(['2', '3'], [b.get('n') for b in ob.b[1:]])
-        self.assertEqual(['1'], [b.get('n') for b in ob.b[:1]])
-
-    def test_subelem_slice_out_of_range(self):
-        ob = xml('<a><b n="1"/><b n="2"/><b n="3"/></a>')
-        self.assertEqual([], ob.b[3:5])
-
-    def test_subelem_iter(self):
-        ob = xml('<a><b n="1"/><b n="2"/></a>')
-        self.assertEqual(['1', '2'], [b.get('n') for b in ob.b])
-
-    def test_root_text(self):
-        ob = xml('<a>abc<b/>def</a>')
-        self.assertEqual('abc', ob.text)
-
-    def test_root_str(self):
-        ob = xml('<a>abc<b/>def</a>')
-        self.assertEqual('abc', str(ob))
-
-    def test_root_eq_str(self):
-        ob = xml('<a>abc<b/>def</a>')
-        self.assertEqual(ob, 'abc')
-        self.assertEqual('abc', ob)
-
-    def test_root_ne_str(self):
-        ob = xml('<a>abc<b/>def</a>')
-        self.assertNotEqual(ob, 'xyz')
-        self.assertNotEqual('xyz', ob)
-
-    def test_root_eq_self(self):
-        ob = xml('<a>abc<b/>def</a>')
-        self.assertEqual(ob, ob)
-
-    def test_elems_equal_if_same_content(self):
-        ob1 = xml('<a m="bar" n="foo">abc<b/>def<c p="q">baz</c></a>')
-        ob2 = xml('<a n="foo" m="bar">abc<b/>def<c p="q">baz</c></a>')
-        self.assertEqual(ob1, ob2)
-
-    def test_elems_not_equal_if_different_content(self):
-        ob1 = xml('<a>abc</a>')
-        ob2 = xml('<a n="foo">abc</a>')
-        self.assertNotEqual(ob1, ob2)
-
-    def test_elems_not_equal_if_extra_child(self):
-        ob1 = xml('<a>abc<b/></a>')
-        ob2 = xml('<a>abc</a>')
-        self.assertNotEqual(ob1, ob2)
-
-    def test_elems_not_equal_if_different_children(self):
-        ob1 = xml('<a>abc<b/>foo</a>')
-        ob2 = xml('<a>abc<b/>bar</a>')
-        self.assertNotEqual(ob1, ob2)
-
-    def test_subelem_text(self):
-        ob = xml('<a>xyz<b>abc</b>def</a>')
-        self.assertEqual('abc', ob.b.text)
-
-    def test_subelem_no_text(self):
-        ob = xml('<a><b/></a>')
-        self.assertIsNone(ob.b.text)
-
-    def test_subelem_str(self):
-        ob = xml('<a>xyz<b>abc</b>def</a>')
-        self.assertEqual('abc', str(ob.b))
-
-    def test_subelem_str_no_text(self):
-        ob = xml('<a><b/></a>')
-        self.assertEqual('', str(ob.b))
-
-    def test_subelem_eq_str(self):
-        ob = xml('<a>xyz<b>abc</b>def</a>')
-        self.assertEqual(ob.b, 'abc')
-        self.assertEqual('abc', ob.b)
-
-    def test_subelem_ne_str(self):
-        ob = xml('<a>xyz<b>abc</b>def</a>')
-        self.assertNotEqual(ob.b, 'xyz')
-        self.assertNotEqual('xyz', ob.b)
-
-    def test_subelem_eq_elem(self):
-        ob = xml('<a>xyz<b>abc</b>def</a>')
-        self.assertEqual(ob.b, ob.b[0])
-
-    def test_subelem_ne_elem(self):
-        ob = xml('<a>xyz<b>abc</b><b>abc</b>def</a>')
-        self.assertNotEqual(ob.b, ob.b[1])
-        self.assertNotEqual(ob.b[0], ob.b[1])
-
-    def test_subelem_eq_not_implemented(self):
-        ob = xml('<a>xyz<b>1</b>def</a>')
-        x = 1
-        self.assertNotEqual(ob.b, x)
-        self.assertNotEqual(x, ob.b)
-
-    def test_subelem_tail(self):
-        ob = xml('<a>xyz<b>abc</b>def</a>')
-        self.assertEqual('def', ob.b.tail)
-
-    def test_subelem_no_tail(self):
-        ob = xml('<a><b>abc</b></a>')
-        self.assertIsNone(ob.b.tail)
-
-    def test_subelem_namespace(self):
-        ns = 'http://nowhere.com/'
-        ob = xml('<n:a xmlns:n="{}"><n:b/></n:a>'.format(ns))
-        self.assertEqual('{%s}b' % ns, ob.b.tag)
-
-    def test_subelem_namespace_index(self):
-        ns = 'http://nowhere.com/'
-        ob = xml('<a xmlns="{}"><b p="1"/><b p="2"/></a>'.format(ns))
-        self.assertEqual('1', ob.b[0].get('p'))
-        self.assertEqual('2', ob.b[1].get('p'))
-
-    def test_subelem_namespace_iter(self):
-        ns = 'http://nowhere.com/'
-        ob = xml('<a xmlns="{}"><b p="1"/><b p="2"/></a>'.format(ns))
-        self.assertEqual(['1', '2'], [b.get('p') for b in ob.b])
-
-    def test_attrib(self):
-        ob = xml('<a m="yyy" n="zzz"></a>')
-        self.assertEqual(dict(m='yyy', n='zzz'), ob.attrib)
-
-    def test_empty_shallow_signature(self):
-        ob = etobj.Element(ET.Element('foo'))
-        self.assertEqual(('foo', {}, None, [], None),
-                         etobj.shallow_signature(ob))
-
-    def test_shallow_signature(self):
-        ob = xml('<a>xyz<b n="bar">abc</b>def</a>')
-        self.assertEqual(('b', {'n':'bar'}, 'abc', [], 'def'),
-                         etobj.shallow_signature(ob.b))
-
-    def test_empty_deep_signature(self):
-        ob = etobj.Element(ET.Element('foo'))
-        self.assertEqual(('foo', {}, None, [], None), etobj.deep_signature(ob))
-
-    def test_deep_signature(self):
-        ob = xml('<a><b n="bar">abc<c m="foo">bar</c></b>def</a>')
-        expected = ('b', {'n':'bar'}, 'abc',
-                    [('c', {'m':'foo'}, 'bar', [], None)], 'def')
-        self.assertEqual(expected, etobj.deep_signature(ob.b))
-
-    def test_elem(self):
-        ob = xml('<a foo="bar">baz</a>')
-        self.assertEqual('a', ob.elem.tag)
-        self.assertEqual(dict(foo='bar'), ob.elem.attrib)
-        self.assertEqual('baz', ob.elem.text)
-
-    def test_parent(self):
-        ob = xml('<a><b><c/></b></a>')
-        self.assertIsNone(ob.parent)
-        self.assertEqual('a', ob.b.parent.tag)
-        self.assertEqual('b', ob.b.c.parent.tag)
-        self.assertEqual('a', ob.b.c.parent.parent.tag)
-
-    def test_root(self):
-        ob = xml('<a><b><c><d/></c></b></a>')
-        for x in [ob, ob.b, ob.b.c, ob.b.c.d]:
-            self.assertIs(ob, etobj.root(x))
-
-    def test_iterancestors(self):
-        ob = xml('<a><b><c><d/></c></b></a>')
-        ancestors = list(etobj.iterancestors(ob.b.c.d))
-        self.assertEqual(['c', 'b', 'a'], [a.tag for a in ancestors])
-        self.assertEqual([], list(etobj.iterancestors(ob)))
-
-
-
-class TestModifications(unittest.TestCase):
+class TestModifyingSubelements(unittest.TestCase):
 
     def test_sets_subelem_no_text(self):
         ob = xml('<a/>')
@@ -337,6 +125,30 @@ class TestModifications(unittest.TestCase):
             ob.b = new
             self.assertEqual(expected, ob)
 
+    def test_deletes_subelement(self):
+        ob = xml('<a><b/></a>')
+        del ob.b
+        self.assertEqual(xml('<a/>'), ob)
+
+    def test_raises_if_subelem_not_found(self):
+        ob = xml('<a><b/></a>')
+        with self.assertRaises(AttributeError):
+            del ob.c
+
+    def test_deletes_subelems_one_by_one(self):
+        ob = xml('<a><b>foo</b><b>bar</b><b>baz</b></a>')
+        del ob.b
+        self.assertEqual(xml('<a><b>bar</b><b>baz</b></a>'), ob)
+        del ob.b
+        self.assertEqual(xml('<a><b>baz</b></a>'), ob)
+        del ob.b
+        self.assertEqual(xml('<a/>'), ob)
+        with self.assertRaises(AttributeError):
+            del ob.b
+
+
+class TestModifyingSubelementsCornerCases(unittest.TestCase):
+
     def test_direct_access_to_instance_dict(self):
         ob = xml('<a/>')
         ob.__dict__['b'] = 'foo'
@@ -389,27 +201,6 @@ class TestModifications(unittest.TestCase):
         self.assertEqual('foo', ob.keys())
         self.assertEqual(xml('<a>welcome<b>bar</b></a>'), ob)
 
-    def test_deletes_subelement(self):
-        ob = xml('<a><b/></a>')
-        del ob.b
-        self.assertEqual(xml('<a/>'), ob)
-
-    def test_raises_if_subelem_not_found(self):
-        ob = xml('<a><b/></a>')
-        with self.assertRaises(AttributeError):
-            del ob.c
-
-    def test_deletes_subelems_one_by_one(self):
-        ob = xml('<a><b>foo</b><b>bar</b><b>baz</b></a>')
-        del ob.b
-        self.assertEqual(xml('<a><b>bar</b><b>baz</b></a>'), ob)
-        del ob.b
-        self.assertEqual(xml('<a><b>baz</b></a>'), ob)
-        del ob.b
-        self.assertEqual(xml('<a/>'), ob)
-        with self.assertRaises(AttributeError):
-            del ob.b
-
     def test_deletes_regular_attributes_normally(self):
         ob = xml('<a/>')
         self.assertTrue(hasattr(ob, '_parent'))
@@ -421,3 +212,248 @@ class TestModifications(unittest.TestCase):
         for prop in ['tag', 'attrib', 'text', 'tail']:
             with self.assertRaises(AttributeError):
                 delattr(ob, prop)
+
+
+class TestSequenceLikeBehavior(unittest.TestCase):
+
+    def test_root_len(self):
+        ob = xml('<a n="zzz"><b/></a>')
+        self.assertEqual(1, len(ob))
+
+    def test_root_index(self):
+        ob = xml('<a n="zzz"><b/></a>')
+        self.assertEqual(ob, ob[0])
+        self.assertEqual(ob, ob[-1])
+
+    def test_root_index_out_of_range(self):
+        ob = xml('<a n="zzz"><b/></a>')
+        with self.assertRaises(IndexError):
+            ob[1]
+
+    def test_root_slice(self):
+        ob = xml('<a n="zzz"><b/></a>')
+        self.assertEqual([ob], ob[:])
+        self.assertEqual([ob], ob[0:1])
+        self.assertEqual([ob], ob[-1:])
+
+    def test_root_slice_out_of_range(self):
+        ob = xml('<a n="zzz"><b/></a>')
+        self.assertEqual([], ob[1:3])
+
+    def test_subelem_index(self):
+        ob = xml('<a><b n="1"/><b n="2"/></a>')
+        self.assertEqual('b', ob.b.tag)
+        self.assertEqual('1', ob.b[0].get('n'))
+        self.assertEqual('2', ob.b[1].get('n'))
+        self.assertEqual('2', ob.b[-1].get('n'))
+
+    def test_subelem_index_out_of_range(self):
+        ob = xml('<a><b n="1"/><b n="2"/></a>')
+        with self.assertRaises(IndexError):
+            ob.b[2]
+
+    def test_subelem_len(self):
+        ob = xml('<a><n/><b n="1"/><b n="2"/><n/><n/></a>')
+        self.assertEqual(2, len(ob.b))
+        self.assertEqual(3, len(ob.n))
+
+    def test_subelem_slice(self):
+        ob = xml('<a><b n="1"/><b n="2"/><b n="3"/></a>')
+        self.assertEqual(['1', '2', '3'], [b.get('n') for b in ob.b[:]])
+        self.assertEqual(['2', '3'], [b.get('n') for b in ob.b[1:]])
+        self.assertEqual(['1'], [b.get('n') for b in ob.b[:1]])
+
+    def test_subelem_slice_out_of_range(self):
+        ob = xml('<a><b n="1"/><b n="2"/><b n="3"/></a>')
+        self.assertEqual([], ob.b[3:5])
+
+    def test_subelem_iter(self):
+        ob = xml('<a><b n="1"/><b n="2"/></a>')
+        self.assertEqual(['1', '2'], [b.get('n') for b in ob.b])
+
+
+class TestElemProperties(unittest.TestCase):
+
+    def test_root_attr(self):
+        ob = xml('<a n="zzz"><b/></a>')
+        self.assertEqual('zzz', ob.get('n'))
+
+    def test_root_text(self):
+        ob = xml('<a>abc<b/>def</a>')
+        self.assertEqual('abc', ob.text)
+
+    def test_root_str(self):
+        ob = xml('<a>abc<b/>def</a>')
+        self.assertEqual('abc', str(ob))
+
+    def test_subelem_text(self):
+        ob = xml('<a>xyz<b>abc</b>def</a>')
+        self.assertEqual('abc', ob.b.text)
+
+    def test_subelem_no_text(self):
+        ob = xml('<a><b/></a>')
+        self.assertIsNone(ob.b.text)
+
+    def test_subelem_str(self):
+        ob = xml('<a>xyz<b>abc</b>def</a>')
+        self.assertEqual('abc', str(ob.b))
+
+    def test_subelem_str_no_text(self):
+        ob = xml('<a><b/></a>')
+        self.assertEqual('', str(ob.b))
+
+    def test_subelem_tail(self):
+        ob = xml('<a>xyz<b>abc</b>def</a>')
+        self.assertEqual('def', ob.b.tail)
+
+    def test_subelem_no_tail(self):
+        ob = xml('<a><b>abc</b></a>')
+        self.assertIsNone(ob.b.tail)
+
+    def test_attrib(self):
+        ob = xml('<a m="yyy" n="zzz"></a>')
+        self.assertEqual(dict(m='yyy', n='zzz'), ob.attrib)
+
+    def test_elem_property(self):
+        ob = xml('<a foo="bar">baz</a>')
+        self.assertEqual('a', ob.elem.tag)
+        self.assertEqual(dict(foo='bar'), ob.elem.attrib)
+        self.assertEqual('baz', ob.elem.text)
+
+    def test_parent_property(self):
+        ob = xml('<a><b><c/></b></a>')
+        self.assertIsNone(ob.parent)
+        self.assertEqual('a', ob.b.parent.tag)
+        self.assertEqual('b', ob.b.c.parent.tag)
+        self.assertEqual('a', ob.b.c.parent.parent.tag)
+
+
+class TestComparison(unittest.TestCase):
+
+    def test_root_eq_str(self):
+        ob = xml('<a>abc<b/>def</a>')
+        self.assertEqual(ob, 'abc')
+        self.assertEqual('abc', ob)
+
+    def test_root_ne_str(self):
+        ob = xml('<a>abc<b/>def</a>')
+        self.assertNotEqual(ob, 'xyz')
+        self.assertNotEqual('xyz', ob)
+
+    def test_root_eq_self(self):
+        ob = xml('<a>abc<b/>def</a>')
+        self.assertEqual(ob, ob)
+
+    def test_elems_equal_if_same_content(self):
+        ob1 = xml('<a m="bar" n="foo">abc<b/>def<c p="q">baz</c></a>')
+        ob2 = xml('<a n="foo" m="bar">abc<b/>def<c p="q">baz</c></a>')
+        self.assertEqual(ob1, ob2)
+
+    def test_elems_not_equal_if_different_content(self):
+        ob1 = xml('<a>abc</a>')
+        ob2 = xml('<a n="foo">abc</a>')
+        self.assertNotEqual(ob1, ob2)
+
+    def test_elems_not_equal_if_extra_child(self):
+        ob1 = xml('<a>abc<b/></a>')
+        ob2 = xml('<a>abc</a>')
+        self.assertNotEqual(ob1, ob2)
+
+    def test_elems_not_equal_if_different_children(self):
+        ob1 = xml('<a>abc<b/>foo</a>')
+        ob2 = xml('<a>abc<b/>bar</a>')
+        self.assertNotEqual(ob1, ob2)
+
+    def test_subelem_eq_str(self):
+        ob = xml('<a>xyz<b>abc</b>def</a>')
+        self.assertEqual(ob.b, 'abc')
+        self.assertEqual('abc', ob.b)
+
+    def test_subelem_ne_str(self):
+        ob = xml('<a>xyz<b>abc</b>def</a>')
+        self.assertNotEqual(ob.b, 'xyz')
+        self.assertNotEqual('xyz', ob.b)
+
+    def test_subelem_eq_elem(self):
+        ob = xml('<a>xyz<b>abc</b>def</a>')
+        self.assertEqual(ob.b, ob.b[0])
+
+    def test_subelem_ne_elem(self):
+        ob = xml('<a>xyz<b>abc</b><b>abc</b>def</a>')
+        self.assertNotEqual(ob.b, ob.b[1])
+        self.assertNotEqual(ob.b[0], ob.b[1])
+
+    def test_subelem_eq_not_implemented(self):
+        ob = xml('<a>xyz<b>1</b>def</a>')
+        x = 1
+        self.assertNotEqual(ob.b, x)
+        self.assertNotEqual(x, ob.b)
+
+
+NS = 'http://nowhere.com/'
+
+class TestNamespaces(unittest.TestCase):
+
+    def test_subelem_namespace(self):
+        ob = xml('<n:a xmlns:n="{}"><n:b/></n:a>'.format(NS))
+        self.assertEqual('{%s}b' % NS, ob.b.tag)
+
+    def test_subelem_namespace_index(self):
+        ob = xml('<a xmlns="{}"><b p="1"/><b p="2"/></a>'.format(NS))
+        self.assertEqual('1', ob.b[0].get('p'))
+        self.assertEqual('2', ob.b[1].get('p'))
+
+    def test_subelem_namespace_iter(self):
+        ob = xml('<a xmlns="{}"><b p="1"/><b p="2"/></a>'.format(NS))
+        self.assertEqual(['1', '2'], [b.get('p') for b in ob.b])
+
+    def test_new_child_has_parent_namespace(self):
+        ob = xml('<n:a xmlns:n="{}"/>'.format(NS))
+        ob.b = 'foo'
+        self.assertEqual('{%s}b' % NS, ob.b.tag)
+        self.assertEqual(
+            xml('<n:a xmlns:n="{}"><n:b>foo</n:b></n:a>'.format(NS)), ob)
+        self.assertEqual(xml('<a xmlns="{}"><b>foo</b></a>'.format(NS)), ob)
+
+    def test_new_child_has_default_namespace(self):
+        ob = xml('<a xmlns="{}"/>'.format(NS))
+        ob.b = 'foo'
+        self.assertEqual('{%s}b' % NS, ob.b.tag)
+        self.assertEqual(
+            xml('<n:a xmlns:n="{}"><n:b>foo</n:b></n:a>'.format(NS)), ob)
+        self.assertEqual(xml('<a xmlns="{}"><b>foo</b></a>'.format(NS)), ob)
+
+
+
+class TestUtilityFunctions(unittest.TestCase):
+
+    def test_empty_shallow_signature(self):
+        ob = etobj.Element(ET.Element('foo'))
+        self.assertEqual(('foo', {}, None, [], None),
+                         etobj.shallow_signature(ob))
+
+    def test_shallow_signature(self):
+        ob = xml('<a>xyz<b n="bar">abc</b>def</a>')
+        self.assertEqual(('b', {'n':'bar'}, 'abc', [], 'def'),
+                         etobj.shallow_signature(ob.b))
+
+    def test_empty_deep_signature(self):
+        ob = etobj.Element(ET.Element('foo'))
+        self.assertEqual(('foo', {}, None, [], None), etobj.deep_signature(ob))
+
+    def test_deep_signature(self):
+        ob = xml('<a><b n="bar">abc<c m="foo">bar</c></b>def</a>')
+        expected = ('b', {'n':'bar'}, 'abc',
+                    [('c', {'m':'foo'}, 'bar', [], None)], 'def')
+        self.assertEqual(expected, etobj.deep_signature(ob.b))
+
+    def test_root(self):
+        ob = xml('<a><b><c><d/></c></b></a>')
+        for x in [ob, ob.b, ob.b.c, ob.b.c.d]:
+            self.assertIs(ob, etobj.root(x))
+
+    def test_iterancestors(self):
+        ob = xml('<a><b><c><d/></c></b></a>')
+        ancestors = list(etobj.iterancestors(ob.b.c.d))
+        self.assertEqual(['c', 'b', 'a'], [a.tag for a in ancestors])
+        self.assertEqual([], list(etobj.iterancestors(ob)))

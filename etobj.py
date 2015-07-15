@@ -6,9 +6,6 @@ import re
 import itertools
 
 
-NS_RE = re.compile(r'\{.+\}')
-
-
 class Element(collections.Sequence):
 
     def __init__(self, elem, parent=None, attr_error_class=None):
@@ -45,9 +42,13 @@ class Element(collections.Sequence):
             elif isinstance(value, Element):
                 new = value.elem
             else:
-                new = _rawelement(self, name, text=value)
+                new = _newelem(self, name, text=value)
+
+            name = _prepend_elem_namespace(self.elem, name)
+
             if new.tag != name:
                 new.tag = name
+
             try:
                 current = _find(self, name)
             except self._attr_error_class as e:
@@ -152,6 +153,7 @@ def deep_signature(obj):
 objectify = Element
 
 
+NS_RE = re.compile(r'\{.+\}')
 
 def _shallow_signature(elem):
     return (elem.tag, elem.attrib, elem.text, [], elem.tail)
@@ -168,15 +170,23 @@ def _equal(elem1, elem2):
     return all(
         _equal(x, y) for x, y in itertools.izip(list(elem1), list(elem2)))
 
-def _rawelement(obj, tag, text):
+def _get_namespace(elem):
+    m = NS_RE.match(elem.tag)
+    return m.group(0) if m else None
+
+def _prepend_namespace(ns, name):
+    return '{}{}'.format(ns, name) if ns else name
+
+def _prepend_elem_namespace(elem, name):
+    return _prepend_namespace(_get_namespace(elem), name)
+
+def _newelem(obj, tag, text):
     new = obj.elem.makeelement(tag, {})
     new.text = text
     return new
 
 def _find(obj, name):
-    m = NS_RE.match(obj.elem.tag)
-    tname = '{}{}'.format(m.group(0), name) if m else name
-    elem = obj.elem.find(tname)
+    elem = obj.elem.find(_prepend_elem_namespace(obj.elem, name))
     if elem is None:
         raise obj._attr_error_class('no such child: {}'.format(name))
     return elem
