@@ -390,23 +390,39 @@ class TestComparison(unittest.TestCase):
         self.assertNotEqual(x, ob.b)
 
 
+NS = 'http://nowhere.com/'
+
 class TestNamespaces(unittest.TestCase):
 
     def test_subelem_namespace(self):
-        ns = 'http://nowhere.com/'
-        ob = xml('<n:a xmlns:n="{}"><n:b/></n:a>'.format(ns))
-        self.assertEqual('{%s}b' % ns, ob.b.tag)
+        ob = xml('<n:a xmlns:n="{}"><n:b/></n:a>'.format(NS))
+        self.assertEqual('{%s}b' % NS, ob.b.tag)
 
     def test_subelem_namespace_index(self):
-        ns = 'http://nowhere.com/'
-        ob = xml('<a xmlns="{}"><b p="1"/><b p="2"/></a>'.format(ns))
+        ob = xml('<a xmlns="{}"><b p="1"/><b p="2"/></a>'.format(NS))
         self.assertEqual('1', ob.b[0].get('p'))
         self.assertEqual('2', ob.b[1].get('p'))
 
     def test_subelem_namespace_iter(self):
-        ns = 'http://nowhere.com/'
-        ob = xml('<a xmlns="{}"><b p="1"/><b p="2"/></a>'.format(ns))
+        ob = xml('<a xmlns="{}"><b p="1"/><b p="2"/></a>'.format(NS))
         self.assertEqual(['1', '2'], [b.get('p') for b in ob.b])
+
+    def test_new_child_has_parent_namespace(self):
+        ob = xml('<n:a xmlns:n="{}"/>'.format(NS))
+        ob.b = 'foo'
+        self.assertEqual('{%s}b' % NS, ob.b.tag)
+        self.assertEqual(
+            xml('<n:a xmlns:n="{}"><n:b>foo</n:b></n:a>'.format(NS)), ob)
+        self.assertEqual(xml('<a xmlns="{}"><b>foo</b></a>'.format(NS)), ob)
+
+    def test_new_child_has_default_namespace(self):
+        ob = xml('<a xmlns="{}"/>'.format(NS))
+        ob.b = 'foo'
+        self.assertEqual('{%s}b' % NS, ob.b.tag)
+        self.assertEqual(
+            xml('<n:a xmlns:n="{}"><n:b>foo</n:b></n:a>'.format(NS)), ob)
+        self.assertEqual(xml('<a xmlns="{}"><b>foo</b></a>'.format(NS)), ob)
+
 
 
 class TestUtilityFunctions(unittest.TestCase):
