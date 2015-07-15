@@ -6,9 +6,6 @@ import re
 import itertools
 
 
-NS_RE = re.compile(r'\{.+\}')
-
-
 class Element(collections.Sequence):
 
     def __init__(self, elem, parent=None, attr_error_class=None):
@@ -45,7 +42,7 @@ class Element(collections.Sequence):
             elif isinstance(value, Element):
                 new = value.elem
             else:
-                new = _rawelement(self, name, text=value)
+                new = _newelem(self, name, text=value)
             if new.tag != name:
                 new.tag = name
             try:
@@ -152,6 +149,7 @@ def deep_signature(obj):
 objectify = Element
 
 
+NS_RE = re.compile(r'\{.+\}')
 
 def _shallow_signature(elem):
     return (elem.tag, elem.attrib, elem.text, [], elem.tail)
@@ -168,7 +166,7 @@ def _equal(elem1, elem2):
     return all(
         _equal(x, y) for x, y in itertools.izip(list(elem1), list(elem2)))
 
-def _rawelement(obj, tag, text):
+def _newelem(obj, tag, text):
     new = obj.elem.makeelement(tag, {})
     new.text = text
     return new
